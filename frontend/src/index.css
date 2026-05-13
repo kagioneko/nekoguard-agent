@@ -1,0 +1,103 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --neko-bg: #0a0d14;
+  --neko-surface: #111827;
+  --neko-border: #1f2937;
+  --neko-accent: #6366f1;
+  --neko-accent-glow: rgba(99, 102, 241, 0.3);
+  --neko-emergency: #ef4444;
+  --neko-alert: #f59e0b;
+  --neko-normal: #10b981;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background-color: var(--neko-bg);
+  color: #e5e7eb;
+  font-family: 'Inter', sans-serif;
+  min-height: 100vh;
+}
+
+.font-mono { font-family: 'JetBrains Mono', monospace; }
+
+/* NeuroState level glow effects */
+.state-emergency { 
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+  border-color: #ef4444 !important;
+}
+.state-alert { 
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+  border-color: #f59e0b !important;
+}
+.state-normal { 
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+  border-color: #10b981 !important;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--neko-surface); }
+::-webkit-scrollbar-thumb { background: var(--neko-border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #374151; }
+
+/* Animations */
+@keyframes pulse-glow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+@keyframes slide-in {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes bar-fill {
+  from { width: 0%; }
+  to { width: var(--bar-width); }
+}
+
+.animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+.animate-slide-in { animation: slide-in 0.3s ease-out forwards; }
+.animate-spin-slow { animation: spin-slow 3s linear infinite; }
+
+.glass {
+  background: rgba(17, 24, 39, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.chat-bubble-agent {
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+}
+.chat-bubble-system {
+  background: rgba(17, 24, 39, 0.9);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.neuro-bar {
+  height: 6px;
+  border-radius: 3px;
+  transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.neuro-bar-dopamine { background: linear-gradient(90deg, #6366f1, #818cf8); }
+.neuro-bar-serotonin { background: linear-gradient(90deg, #10b981, #34d399); }
+.neuro-bar-gaba { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+.neuro-bar-acetylcholine { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+
+.dropzone-active {
+  border-color: #6366f1 !important;
+  background: rgba(99, 102, 241, 0.05);
+}
+
+.action-step-entering { animation: slide-in 0.4s ease-out forwards; }

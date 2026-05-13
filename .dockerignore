@@ -1,0 +1,9 @@
+frontend/node_modules
+frontend/.git
+**/__pycache__
+**/*.pyc
+.env
+.git
+*.md
+demo/
+review_contact_sheets/

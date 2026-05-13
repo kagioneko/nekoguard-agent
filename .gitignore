@@ -1,0 +1,25 @@
+# 環境変数・秘密情報
+.env
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# ログ・一時ファイル
+activity.log
+*.log
+review_contact_sheets/
+
+# OS
+.DS_Store
+Thumbs.db
