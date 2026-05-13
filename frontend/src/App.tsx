@@ -75,6 +75,18 @@ function App() {
         // 全ステップ完了
         setTimeout(() => {
           addMsg({ type: 'agent', text: 'すべての対応が完了したニャ！本当にお疲れ様！これで安心できるよ 🐾💚' })
+
+          // スキップしたステップがあれば再通知
+          const skipped = updated.filter(s => s.status === 'skipped')
+          if (skipped.length > 0) {
+            setTimeout(() => {
+              addMsg({
+                type: 'system',
+                text: `⚠️ 以下の項目がスキップされています。後で必ず対応してニャ！\n\n${skipped.map(s => `• ${s.title}`).join('\n')}`
+              })
+            }, 800)
+          }
+
           setRunning(false)
         }, 400)
       }
