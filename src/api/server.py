@@ -37,7 +37,7 @@ class AnalyzeRequest(BaseModel):
     demo_mode: bool = True
     vps_config: VpsConfig | None = None
 
-@app.get("/")
+@app.get("/health")
 def read_root():
     return {"status": "NekoGuard API is running"}
 
