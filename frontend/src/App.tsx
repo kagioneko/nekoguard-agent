@@ -14,7 +14,7 @@ type ServerStep = {
   triage_report?: TriageReport
 }
 
-const API_BASE = 'http://localhost:8000'
+const API_BASE = import.meta.env.DEV ? 'http://localhost:8000' : ''
 
 function App() {
   const [vpsConfig, setVpsConfig] = useState<VpsConfig | null>(null)
