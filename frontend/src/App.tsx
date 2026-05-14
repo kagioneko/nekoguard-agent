@@ -121,7 +121,13 @@ function App() {
               break
             case 'phase_start':
               setCurrentPhase(event.phase)
-              updateNeuroFromPhase(event.phase, event.param)
+              if (event.neuro_params) {
+                // NeuroState Engine の物理計算値をそのまま反映
+                setNeuroParams(event.neuro_params)
+                setCurrentParam(event.param)
+              } else {
+                updateNeuroFromPhase(event.phase, event.param)
+              }
               addMsg({ type: 'phase', text: `${event.name}  ${event.desc}`, phase: event.phase })
               break
             case 'phase_result':

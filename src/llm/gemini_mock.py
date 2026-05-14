@@ -2,7 +2,7 @@ class GeminiMock:
     def __init__(self):
         self.model_name = "gemini-mock"
 
-    def analyze_incident(self, input_data: str, is_image: bool = False, state: str = "NORMAL", phase: int = 1) -> dict:
+    def analyze_incident(self, input_data: str, is_image: bool = False, state: str = "NORMAL", phase: int = 1, neuro_state=None) -> dict:
         """デモ用のモックレスポンスを返す。フェーズに応じて出力を変更する。"""
         
         text_content = ""
@@ -29,6 +29,19 @@ class GeminiMock:
                 response_text = "【Recovery】\n被害は確認されませんでしたが、再発防止のためにABC Protocolの Containment ステップを実行することをお勧めします。"
         else:
             response_text = f"【Phase {phase}】\n正常稼働中です。異常は検知されませんでした。"
+
+        # NeuroState ヘッダーをモック出力に付加（実際の値を反映）
+        if neuro_state is not None:
+            import sys, os
+            src_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            if src_dir not in sys.path:
+                sys.path.insert(0, src_dir)
+            try:
+                from neurostate_core.prompt_builder import build_neuro_log_header
+                header = build_neuro_log_header(neuro_state)
+                response_text = f"{header}\n\n{response_text}"
+            except Exception:
+                pass
 
         return {"text": response_text}
 

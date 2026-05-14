@@ -63,11 +63,17 @@ async def event_generator(log_text: str, demo_mode: bool, vps_config: VpsConfig 
     # 2. 4フェーズループ
     for phase in range(1, 5):
         ns = agent.get_phase_neurostate(phase)
-        yield f"data: {json.dumps({'type': 'phase_start', 'phase': phase, 'name': ns['name'], 'param': ns['param'], 'desc': ns['desc']})}\n\n"
-        await asyncio.sleep(1) # モックとしてのウェイト
-        
+        yield f"data: {json.dumps({'type': 'phase_start', 'phase': phase, 'name': ns['name'], 'param': ns['param'], 'desc': ns['desc'], 'neuro_params': ns['frontend_params']})}\n\n"
+        await asyncio.sleep(1)
+
         state_context = f"{agent.neurostate} | Mode: {ns['name']} | Params: {ns['param']}"
-        result = agent.llm.analyze_incident(log_text, is_image=False, state=state_context, phase=phase)
+        result = agent.llm.analyze_incident(
+            log_text,
+            is_image=False,
+            state=state_context,
+            phase=phase,
+            neuro_state=ns["neuro_state"],
+        )
         
         yield f"data: {json.dumps({'type': 'phase_result', 'phase': phase, 'text': result['text']})}\n\n"
         await asyncio.sleep(2)
