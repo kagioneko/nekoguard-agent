@@ -1,0 +1,69 @@
+{
+  "source": "dynatrace",
+  "time_window": "last_24h",
+  "scenario": "past_breach",
+  "alerts": [
+    {
+      "severity": "high",
+      "title": "Suspicious SSH login from unknown IP (now inactive)",
+      "timestamp": "2026-05-31T22:14:33Z",
+      "affected_service": "prod-vps-01",
+      "problem_id": "P-20260531-008",
+      "status": "resolved"
+    },
+    {
+      "severity": "medium",
+      "title": "GitHub Actions secret possibly exposed in public repo",
+      "timestamp": "2026-05-31T22:30:00Z",
+      "affected_service": "github-ci",
+      "problem_id": "P-20260531-009",
+      "status": "open"
+    },
+    {
+      "severity": "medium",
+      "title": "Stripe API key detected in commit history (public repo)",
+      "timestamp": "2026-05-31T23:05:00Z",
+      "affected_service": "billing-api",
+      "problem_id": "P-20260531-010",
+      "status": "open"
+    }
+  ],
+  "suspicious_ips": [
+    {
+      "ip": "91.108.56.130",
+      "reason": "SSH login succeeded ~6 hours ago. No activity since. Likely credential theft, not ongoing session.",
+      "confidence": 0.72,
+      "geo": "DE",
+      "first_seen": "2026-05-31T22:14:33Z",
+      "last_seen": "2026-05-31T22:21:07Z"
+    }
+  ],
+  "log_findings": [
+    {
+      "timestamp": "2026-05-31T22:14:33Z",
+      "source": "/var/log/auth.log",
+      "summary": "Accepted password for deploy from 91.108.56.130 — 1 successful login, session ended at 22:21",
+      "risk": "unauthorized_access"
+    },
+    {
+      "timestamp": "2026-05-31T22:17:44Z",
+      "source": "/var/log/audit.log",
+      "summary": "git clone of private repo executed during session",
+      "risk": "data_exfiltration"
+    },
+    {
+      "timestamp": "2026-05-31T22:30:00Z",
+      "source": "github-api",
+      "summary": "Secret STRIPE_SECRET_KEY found in commit abc1234 (pushed 3 days ago, repo is public)",
+      "risk": "credential_exposure"
+    },
+    {
+      "timestamp": "2026-06-01T04:00:00Z",
+      "source": "stripe-dashboard",
+      "summary": "Stripe detected unusual API activity from unknown IP — account under review",
+      "risk": "credential_abuse"
+    }
+  ],
+  "affected_services": ["prod-vps-01", "github-ci", "billing-api"],
+  "recommended_next_actions": []
+}

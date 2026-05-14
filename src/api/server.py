@@ -37,6 +37,29 @@ class AnalyzeRequest(BaseModel):
     demo_mode: bool = True
     vps_config: VpsConfig | None = None
 
+class ObservabilitySnapshot(BaseModel):
+    """Dynatrace（または Mock）から正規化したスナップショット"""
+    source: str = "mock"
+    time_window: str = "last_30m"
+    scenario: str = ""
+    alerts: list = []
+    suspicious_ips: list = []
+    log_findings: list = []
+    affected_services: list = []
+
+def snapshot_to_log_text(snap: ObservabilitySnapshot) -> str:
+    """ObservabilitySnapshot をログテキストに変換して既存フローに渡す"""
+    lines = [f"[Dynatrace Snapshot] source={snap.source} window={snap.time_window}"]
+    for a in snap.alerts:
+        lines.append(f"ALERT [{a.get('severity','?').upper()}] {a.get('title','')} @ {a.get('affected_service','')}")
+    for ip in snap.suspicious_ips:
+        lines.append(f"SUSPICIOUS_IP {ip.get('ip','')} reason={ip.get('reason','')} confidence={ip.get('confidence',0)}")
+    for f in snap.log_findings:
+        lines.append(f"LOG_FINDING [{f.get('risk','?')}] {f.get('summary','')} source={f.get('source','')}")
+    if snap.affected_services:
+        lines.append(f"AFFECTED_SERVICES: {', '.join(snap.affected_services)}")
+    return "\n".join(lines)
+
 @app.get("/health")
 def read_root():
     return {"status": "NekoGuard API is running"}
@@ -197,6 +220,12 @@ async def event_generator(log_text: str, demo_mode: bool, vps_config: VpsConfig 
 async def analyze_incident(req: AnalyzeRequest):
     """テキストログを受け取ってSSEで返すエンドポイント"""
     return StreamingResponse(event_generator(req.log_text, req.demo_mode, req.vps_config), media_type="text/event-stream")
+
+@app.post("/api/analyze/observability")
+async def analyze_observability(snap: ObservabilitySnapshot, demo_mode: bool = True):
+    """Dynatrace スナップショット（正規化 JSON）を受け取ってSSEで返すエンドポイント"""
+    log_text = snapshot_to_log_text(snap)
+    return StreamingResponse(event_generator(log_text, demo_mode), media_type="text/event-stream")
 
 @app.post("/api/upload")
 async def upload_image(file: UploadFile = File(...), demo_mode: bool = True):
