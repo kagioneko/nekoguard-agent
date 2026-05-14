@@ -26,7 +26,7 @@ Stopping billing and revoking API keys before investigating prevents the majorit
 | Primary LLM | Gemini 3 (required by hackathon) |
 | Multimodal Input | Gemini Vision (screenshot analysis) |
 | Monitoring | Dynatrace MCP |
-| Execution Layer | Claude Code (VPS-side) |
+| Execution Layer | Human-in-the-loop (user-approved VPS actions) |
 | State Management | NeuroState Engine |
 
 ### Deployment Model
@@ -110,8 +110,8 @@ Based on findings from:
 | Phase | Role | NeuroState Direction | Target Behavior |
 |-------|------|----------------------|-----------------|
 | Wide-area scan | Anomaly detection | Default Gemini | Broad pattern recognition, optimistic reframing for initial triage |
-| Judgment phase | Risk assessment | Serotonin↑ GABA↑ | Cautious, ethics-weighted, Claude-like deliberation |
-| Detail analysis | Technical forensics | Dopamine↓ Acetylcholine↑ | Low emotional density, high technical precision, Codex-like |
+| Judgment phase | Risk assessment | Serotonin↑ GABA↑ | 抑制系優位: cautious, ethics-weighted, irreversible-risk evaluation mode |
+| Detail analysis | Technical forensics | Dopamine↓ Acetylcholine↑ | 情動密度低下: low emotional density, high technical precision, forensic focus mode |
 | Recovery phase | User guidance | Default Gemini | Natural positive reframing, constructive next-step guidance |
 
 **Why this works**: Different LLM models exhibit relatively stable "semantic attractors" — characteristic paths through meaning space. NeuroState prompt parameters can nudge Gemini toward adjacent attractor regions without switching models.
@@ -154,12 +154,12 @@ Protocol selection: CAT (active) or ABC (past)
     → Identify affected services
     → Estimate breach scope
     ↓
-[Phase 2] Judgment: Claude-like mode (Serotonin↑ GABA↑)
+[Phase 2] Judgment: NeuroState Serotonin↑ GABA↑ mode
     → Risk assessment
     → Action priority ranking
     → Irreversible action confirmation
     ↓
-[Phase 3] Detail analysis: Codex-like mode (AC↑ D↓)
+[Phase 3] Detail analysis: NeuroState Dopamine↓ Acetylcholine↑ mode
     → Log forensics via Dynatrace MCP
     → Technical damage assessment
     → Evidence collection
@@ -169,8 +169,8 @@ Protocol selection: CAT (active) or ABC (past)
     → Dynamic checklist (updates as user completes steps)
     → Incident report generation
     ↓
-Claude Code (VPS-side execution layer)
-    → Receives natural language instructions from NekoGuard
+Human-in-the-loop execution layer (VPS-side, user-approved)
+    → User confirms each action via checklist
     → Executes: SSH restriction, credential rotation, hardening
 ```
 
