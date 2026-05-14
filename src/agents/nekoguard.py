@@ -54,8 +54,8 @@ class NekoGuardAgent:
         """各フェーズのNeuroStateパラメーター（モック）"""
         states = {
             1: {"name": "Wide-scan", "param": "Default", "desc": "広範な異常検知、楽観的リフレーミング"},
-            2: {"name": "Judgment", "param": "Serotonin↑ GABA↑", "desc": "慎重・倫理的判断、Claude風"},
-            3: {"name": "Detail analysis", "param": "Dopamine↓ Acetylcholine↑", "desc": "技術的フォレンジック、Codex風"},
+            2: {"name": "Judgment", "param": "Serotonin↑ GABA↑", "desc": "慎重・倫理的判断、リスク重視モード"},
+            3: {"name": "Detail analysis", "param": "Dopamine↓ Acetylcholine↑", "desc": "技術的フォレンジック、精密分析モード"},
             4: {"name": "Recovery", "param": "Default", "desc": "ユーザーへのガイダンス、励まし"}
         }
         return states.get(phase, states[1])
