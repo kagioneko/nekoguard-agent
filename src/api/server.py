@@ -14,6 +14,14 @@ if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
 from agents.nekoguard import NekoGuardAgent
+from observability import MockObservabilityProvider
+from observability.dynatrace_provider import DynatraceObservabilityProvider
+
+def get_observability_provider():
+    """環境変数に応じてプロバイダーを切り替える"""
+    if os.environ.get("DYNATRACE_API_TOKEN") and os.environ.get("DYNATRACE_TENANT_URL"):
+        return DynatraceObservabilityProvider()
+    return MockObservabilityProvider()
 
 app = FastAPI(title="NekoGuard API")
 
@@ -226,6 +234,36 @@ async def analyze_observability(snap: ObservabilitySnapshot, demo_mode: bool = T
     """Dynatrace スナップショット（正規化 JSON）を受け取ってSSEで返すエンドポイント"""
     log_text = snapshot_to_log_text(snap)
     return StreamingResponse(event_generator(log_text, demo_mode), media_type="text/event-stream")
+
+@app.post("/api/analyze/dynatrace")
+async def analyze_dynatrace(
+    demo_mode: bool = True,
+    time_window: str = "last_30m",
+    scenario: str = "active_breach",
+):
+    """
+    Dynatrace から直接データを取得して分析するエンドポイント。
+    DYNATRACE_API_TOKEN が設定されている場合は実データを使用。
+    未設定の場合は fixture JSON にフォールバック。
+    """
+    provider = get_observability_provider()
+    if isinstance(provider, MockObservabilityProvider):
+        provider.scenario = scenario
+    snapshot = provider.get_snapshot(time_window=time_window)
+    log_text = snapshot.to_log_text()
+    return StreamingResponse(event_generator(log_text, demo_mode), media_type="text/event-stream")
+
+@app.get("/api/dynatrace/status")
+async def dynatrace_status():
+    """Dynatrace 接続状態を確認するエンドポイント"""
+    provider = get_observability_provider()
+    is_dynatrace = isinstance(provider, DynatraceObservabilityProvider)
+    available = provider.is_available() if is_dynatrace else True
+    return {
+        "mode": "dynatrace" if is_dynatrace else "mock",
+        "tenant_url": os.environ.get("DYNATRACE_TENANT_URL", "N/A"),
+        "available": available,
+    }
 
 @app.post("/api/upload")
 async def upload_image(file: UploadFile = File(...), demo_mode: bool = True):
