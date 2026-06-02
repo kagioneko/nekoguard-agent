@@ -10,8 +10,16 @@ import sys
 
 # src ディレクトリをパスに追加
 SRC_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PROJECT_ROOT = os.path.dirname(SRC_DIR)
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
+
+# .env 読み込み
+try:
+    from dotenv import load_dotenv
+    load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
+except ImportError:
+    pass
 
 from agents.nekoguard import NekoGuardAgent
 from observability import MockObservabilityProvider
