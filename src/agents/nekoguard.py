@@ -67,10 +67,10 @@ class NekoGuardAgent:
         param_label = state_to_param_label(ns)
 
         phase_meta = {
-            1: {"name": "Wide-scan",      "desc": "広範な異常検知、楽観的リフレーミング"},
-            2: {"name": "Judgment",       "desc": "抑制系優位・不可逆リスク評価モード"},
-            3: {"name": "Detail analysis","desc": "情動密度低下・技術的精度最大化モード"},
-            4: {"name": "Recovery",       "desc": "ユーザーへのガイダンス、励まし"},
+            1: {"name": "Wide-scan",      "desc": "Broad anomaly detection, optimistic reframing"},
+            2: {"name": "Judgment",       "desc": "Inhibition-dominant, irreversible-risk assessment mode"},
+            3: {"name": "Detail analysis","desc": "Low emotional density, maximum technical precision mode"},
+            4: {"name": "Recovery",       "desc": "User guidance and reassurance"},
         }
         meta = phase_meta.get(phase, phase_meta[1])
 

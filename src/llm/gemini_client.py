@@ -27,7 +27,7 @@ class GeminiClient:
                 location=self.location
             )
 
-        self.model_name = "gemini-2.5-flash"
+        self.model_name = "gemini-3.5-flash"
 
     def analyze_incident(
         self,
@@ -48,25 +48,28 @@ class GeminiClient:
         if neuro_state is not None:
             system_prompt = build_nekoguard_system_prompt(neuro_state, phase)
         else:
-            # フォールバック（neuro_state 未渡しの場合）
             system_prompt = (
-                "あなたはセキュリティ対応 AI エージェント「NekoGuard」です。"
-                "インシデントを冷静に分析し、ユーザーを安心させながら対応策を提示してください。"
+                "You are NekoGuard, an AI security incident response agent. "
+                "Analyze incidents calmly, reassure the user, and provide clear action steps. "
+                "Always respond in English. Use 'Nya!' occasionally to keep your friendly cat personality."
             )
 
-        # --- User prompt: フェーズ指示 + 解析対象 ---
+        # Add English + conciseness instruction to system prompt
+        system_prompt += "\n\nIMPORTANT: Always respond in English. After the [NEKOGUARD_NEURO_LOG] header, keep your response to MAXIMUM 3 bullet points or 80 words. Be extremely concise and direct. No lengthy paragraphs."
+
+        # --- User prompt: phase instructions + target data ---
         phase_instructions = {
-            1: "【Phase 1: Wide-scan】\n広範な異常検知を行い、影響サービス・範囲を特定してください。初期トリアージとして楽観的にリフレーミングし、パニックを防ぐ表現を心がけてください。",
-            2: "【Phase 2: Judgment】\n侵害の深刻度・緊急度を評価し、Active Breach か Past Breach かを判断してください。不可逆操作リスクを最重視し、段階的なアクション優先度を示してください。",
-            3: "【Phase 3: Detail analysis】\nログ・プロセス・ネットワークのフォレンジック解析を行い、攻撃手法・侵害経路・漏洩可能性を技術的に詳述してください。感情的表現は最小限に。",
-            4: "【Phase 4: Recovery】\n分析を統合し、最終判断として「Active Breach」か「Past Breach」かを明示してください。ユーザーが最初の5分で取るべき行動を、優しく・具体的に提示してください。",
+            1: "[Phase 1: Wide-scan]\nBriefly identify anomalies and affected scope. Stay calm and reassuring. Max 3 bullet points.",
+            2: "[Phase 2: Judgment]\nState severity and whether this is Active Breach or Past Breach. List top 2-3 priority actions. Be direct.",
+            3: "[Phase 3: Detail Analysis]\nForensic summary: attack vector, breach path, exposed data. Technical, minimal emotion. Max 4 bullet points.",
+            4: "[Phase 4: Recovery]\nVerdict: 'Active Breach' or 'Past Breach'. Give the 3 most critical first actions. Brief and actionable.",
         }
 
         user_prompt = (
-            f"【NeuroState】{state}\n\n"
+            f"[NeuroState] {state}\n\n"
             f"{phase_instructions.get(phase, phase_instructions[1])}\n\n"
-            f"【解析対象情報】\n"
-            f"{input_data if not is_image else '画像データ（スクリーンショット）'}"
+            f"[Incident Data]\n"
+            f"{input_data if not is_image else 'Image data (screenshot)'}"
         )
 
         contents: list = [user_prompt]
@@ -92,7 +95,7 @@ class GeminiClient:
         except Exception as e:
             try:
                 response = self.client.models.generate_content(
-                    model="gemini-2.0-flash",
+                    model="gemini-2.5-flash",
                     contents=contents,
                     config=types.GenerateContentConfig(
                         system_instruction=system_prompt,

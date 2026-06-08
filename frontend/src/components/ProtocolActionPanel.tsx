@@ -27,7 +27,7 @@ export const ProtocolActionPanel: React.FC<Props> = ({ protocol, steps, onConfir
       <div className="glass rounded-2xl p-5 flex items-center justify-center h-48">
         <div className="text-center text-gray-600">
           <p className="text-3xl mb-2">📋</p>
-          <p className="text-sm">プロトコル待機中ニャ…</p>
+          <p className="text-sm">Awaiting protocol, Nya…</p>
         </div>
       </div>
     )
@@ -75,7 +75,7 @@ export const ProtocolActionPanel: React.FC<Props> = ({ protocol, steps, onConfir
                   <p className="text-xs text-gray-500 mt-0.5 font-mono leading-relaxed">{step.desc}</p>
                 )}
                 {step.status === 'skipped' && (
-                  <p className="text-xs text-gray-600 mt-0.5">スキップされました</p>
+                  <p className="text-xs text-gray-600 mt-0.5">Skipped</p>
                 )}
               </div>
             </div>
@@ -88,12 +88,12 @@ export const ProtocolActionPanel: React.FC<Props> = ({ protocol, steps, onConfir
                   style={{ background: 'linear-gradient(135deg, #10b981, #34d399)' }}
                   onClick={() => onConfirm(step.id)}
                 >
-                  ✅ 完了した
+                  ✅ Done
                 </button>
                 <button
                   className="px-4 py-2 rounded-lg text-sm font-medium text-gray-400 border border-gray-600 hover:border-gray-500 hover:text-gray-300 transition-all duration-200 active:scale-95"
                   onClick={() => onSkip(step.id)}
-                  title="まだ完了していないか不確かな場合にスキップ"
+                  title="Skip if not yet completed or unsure"
                 >
                   ⏭ Skip
                 </button>

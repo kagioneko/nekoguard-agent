@@ -4,6 +4,7 @@ import { NeuroStateMeter } from './components/NeuroStateMeter'
 import { ChatWindow, type ChatMessage, type TriageReport } from './components/ChatWindow'
 import { ProtocolActionPanel, type ActionStep } from './components/ProtocolActionPanel'
 import { VpsConnectModal, type VpsConfig } from './components/VpsConnectModal'
+import { TerminalPanel, type TerminalLine } from './components/TerminalPanel'
 
 type NeuroLevel = 'NORMAL' | 'ALERT' | 'EMERGENCY'
 
@@ -26,6 +27,11 @@ function App() {
   const [protocol, setProtocol] = useState<string | null>(null)
   const [steps, setSteps] = useState<ActionStep[]>([])
   const [running, setRunning] = useState(false)
+  const [terminalLines, setTerminalLines] = useState<TerminalLine[]>([])
+  const termLineIdRef = useRef(0)
+  const addTermLine = useCallback((text: string, kind: TerminalLine['kind'] = 'output') => {
+    setTerminalLines(prev => [...prev, { id: String(++termLineIdRef.current), text, kind }])
+  }, [])
 
   // protocol_ready で受け取った全ステップデータ（triage_reportつき）を保持
   const serverStepsRef = useRef<ServerStep[]>([])
@@ -74,7 +80,7 @@ function App() {
       } else {
         // 全ステップ完了
         setTimeout(() => {
-          addMsg({ type: 'agent', text: 'すべての対応が完了したニャ！本当にお疲れ様！これで安心できるよ 🐾💚' })
+          addMsg({ type: 'agent', text: "All steps complete, Nya! You did an amazing job! You're safe now 🐾💚" })
 
           // スキップしたステップがあれば再通知
           const skipped = updated.filter(s => s.status === 'skipped')
@@ -82,7 +88,7 @@ function App() {
             setTimeout(() => {
               addMsg({
                 type: 'system',
-                text: `⚠️ 以下の項目がスキップされています。後で必ず対応してニャ！\n\n${skipped.map(s => `• ${s.title}`).join('\n')}`
+                text: `⚠️ The following steps were skipped. Make sure to handle them later, Nya!\n\n${skipped.map(s => `• ${s.title}`).join('\n')}`
               })
             }, 800)
           }
@@ -117,7 +123,7 @@ function App() {
           switch (event.type) {
             case 'status':
               setNeuroLevel(event.neurostate as NeuroLevel)
-              addMsg({ type: 'agent', text: `${event.message}！NeuroState: ${event.neurostate} 🐾` })
+              addMsg({ type: 'agent', text: `${event.message}! NeuroState: ${event.neurostate} 🐾` })
               break
             case 'phase_start':
               setCurrentPhase(event.phase)
@@ -136,9 +142,12 @@ function App() {
             case 'agent_action':
               addMsg({ type: 'agent', text: event.text })
               break
+            case 'terminal_line':
+              addTermLine(event.text, event.kind ?? 'output')
+              break
             case 'protocol_decision':
               setProtocol(event.protocol)
-              addMsg({ type: 'agent', text: `分析完了！${event.protocol}を起動するニャ 🚀` })
+              addMsg({ type: 'agent', text: `Analysis complete! Launching ${event.protocol}, Nya 🚀` })
               break
             case 'protocol_ready': {
               const serverSteps: ServerStep[] = event.steps
@@ -159,7 +168,7 @@ function App() {
               if (first?.triage_report) {
                 addMsg({
                   type: 'revoke_list',
-                  text: 'ログ解析と認証情報スキャンが完了したニャ。以下を確認して、削除・ローテーションを進めてニャ！',
+                  text: 'Log analysis and credential scan complete, Nya! Review the list below and proceed with revocation and rotation.',
                   triage: first.triage_report,
                 })
               }
@@ -180,6 +189,7 @@ function App() {
     setProtocol(null)
     setCurrentPhase(null)
     setCurrentParam('')
+    setTerminalLines([])
     serverStepsRef.current = []
   }
 
@@ -187,16 +197,16 @@ function App() {
     if (!text.trim() || running) return
     setRunning(true)
     resetState()
-    addMsg({ type: 'agent', text: '受け取ったニャ！今すぐ解析を始めるよ。深呼吸してニャ 🐱' })
+    addMsg({ type: 'agent', text: "Got it, Nya! Starting analysis right now. Take a deep breath 🐱" })
     try {
       const res = await fetch(`${API_BASE}/api/analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ log_text: text, demo_mode: true, vps_config: vpsConfig }),
+        body: JSON.stringify({ log_text: text, demo_mode: false, vps_config: vpsConfig }),
       })
       await processStream(res)
     } catch {
-      addMsg({ type: 'system', text: 'バックエンドへの接続に失敗したニャ。サーバーが起動しているか確認してニャ。' })
+      addMsg({ type: 'system', text: 'Failed to connect to backend, Nya. Please check if the server is running.' })
       setRunning(false)
     }
   }, [running, addMsg, processStream, vpsConfig])
@@ -205,15 +215,15 @@ function App() {
     if (running) return
     setRunning(true)
     resetState()
-    addMsg({ type: 'agent', text: `画像「${file.name}」を受け取ったニャ！解析するよ 📨` })
+    addMsg({ type: 'agent', text: `Got image "${file.name}", Nya! Analyzing now 📨` })
     const formData = new FormData()
     formData.append('file', file)
-    formData.append('demo_mode', 'true')
+    formData.append('demo_mode', 'false')
     try {
       const res = await fetch(`${API_BASE}/api/upload`, { method: 'POST', body: formData })
       await processStream(res)
     } catch {
-      addMsg({ type: 'system', text: 'バックエンドへの接続に失敗したニャ。サーバーが起動しているか確認してニャ。' })
+      addMsg({ type: 'system', text: 'Failed to connect to backend, Nya. Please check if the server is running.' })
       setRunning(false)
     }
   }, [running, addMsg, processStream])
@@ -230,7 +240,7 @@ function App() {
             <span className="text-3xl">🐱</span>
             <div>
               <h1 className="text-xl font-bold text-white tracking-tight">NekoGuard Agent</h1>
-              <p className="text-xs text-gray-500">Incident Response AI · Google Cloud Hackathon</p>
+              <p className="text-xs text-gray-500">Incident Response AI · Google Cloud Rapid Agent Hackathon</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -261,6 +271,7 @@ function App() {
         <div className="space-y-6">
           <div>
             <h2 className="text-xs text-gray-500 uppercase tracking-widest font-medium mb-3">🧠 NeuroState Engine</h2>
+
             <NeuroStateMeter
               level={neuroLevel}
               params={neuroParams}
@@ -269,7 +280,7 @@ function App() {
             />
           </div>
           <div>
-            <h2 className="text-xs text-gray-500 uppercase tracking-widest font-medium mb-3">📨 インシデント入力</h2>
+            <h2 className="text-xs text-gray-500 uppercase tracking-widest font-medium mb-3">📨 Incident Input</h2>
             <IncidentDropzone
               onFileSelect={handleFileSelect}
               onTextSubmit={handleTextSubmit}
@@ -281,6 +292,7 @@ function App() {
         {/* 中央カラム */}
         <div className="space-y-4">
           <h2 className="text-xs text-gray-500 uppercase tracking-widest font-medium">💬 NekoGuard Chat</h2>
+
           <ChatWindow messages={messages} />
         </div>
 
@@ -293,9 +305,15 @@ function App() {
             onConfirm={handleConfirm}
             onSkip={handleSkip}
           />
+          {terminalLines.length > 0 && (
+            <div>
+              <h2 className="text-xs text-gray-500 uppercase tracking-widest font-medium mb-3">🖥️ Agent Terminal</h2>
+              <TerminalPanel lines={terminalLines} active={running} />
+            </div>
+          )}
           <div className="glass rounded-xl p-4 text-center space-y-1">
             <p className="text-xs text-gray-600">Powered by</p>
-            <p className="text-xs text-gray-500 font-mono">Gemini 3 · Dynatrace MCP · NeuroState Engine</p>
+            <p className="text-xs text-gray-500 font-mono">Gemini 3.5 Flash · Dynatrace MCP · NeuroState Engine</p>
             <p className="text-xs text-indigo-400 mt-2">Google Cloud Rapid Agent Hackathon 2026</p>
           </div>
         </div>

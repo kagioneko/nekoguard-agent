@@ -40,8 +40,8 @@ export const ChatWindow: React.FC<Props> = ({ messages }) => {
         <div className="flex items-center justify-center h-full">
           <div className="text-center text-gray-600">
             <p className="text-4xl mb-2">🐱</p>
-            <p className="text-sm">NekoGuardがスタンバイ中ニャ…</p>
-            <p className="text-xs mt-1">上からインシデントを投げ込んでみてニャ！</p>
+            <p className="text-sm">NekoGuard is on standby, Nya…</p>
+            <p className="text-xs mt-1">Drop an incident log above to get started!</p>
           </div>
         </div>
       )}
@@ -73,7 +73,7 @@ export const ChatWindow: React.FC<Props> = ({ messages }) => {
               {/* 攻撃者IP */}
               {msg.triage.attacker_ips.length > 0 && (
                 <div className="ml-11 rounded-xl border border-red-500/30 bg-red-500/5 p-3 space-y-1">
-                  <p className="text-xs text-red-400 font-bold uppercase tracking-widest">⚠ 攻撃者IP</p>
+                  <p className="text-xs text-red-400 font-bold uppercase tracking-widest">⚠ Attacker IPs</p>
                   {msg.triage.attacker_ips.map((ip, i) => (
                     <p key={i} className="text-xs font-mono text-red-300">{ip}</p>
                   ))}
@@ -82,7 +82,7 @@ export const ChatWindow: React.FC<Props> = ({ messages }) => {
               {/* ログ抜粋 */}
               {msg.triage.log_findings.length > 0 && (
                 <div className="ml-11 rounded-xl border border-gray-700 bg-black/40 p-3 space-y-1">
-                  <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">📄 ログ抜粋</p>
+                  <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">📄 Log Findings</p>
                   {msg.triage.log_findings.map((line, i) => (
                     <p key={i} className="text-xs font-mono text-gray-400">{line}</p>
                   ))}
@@ -91,7 +91,7 @@ export const ChatWindow: React.FC<Props> = ({ messages }) => {
               {/* 削除推奨リスト */}
               {msg.triage.revoke_list.length > 0 && (
                 <div className="ml-11 rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 space-y-2">
-                  <p className="text-xs text-amber-400 font-bold uppercase tracking-widest">🗑 削除・ローテーション推奨リスト</p>
+                  <p className="text-xs text-amber-400 font-bold uppercase tracking-widest">🗑 Revoke &amp; Rotate Recommended</p>
                   {msg.triage.revoke_list.map((item, i) => (
                     <div key={i} className="rounded-lg border border-amber-500/20 bg-black/30 px-3 py-2 space-y-0.5">
                       <div className="flex items-center justify-between">

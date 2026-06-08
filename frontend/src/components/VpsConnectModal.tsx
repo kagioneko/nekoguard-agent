@@ -30,7 +30,7 @@ export const VpsConnectModal: React.FC<Props> = ({ onConnect }) => {
 
   const handleConnect = async () => {
     if (!host.trim() || !sshKey.trim()) {
-      setError('ホストとSSH秘密鍵は必須ニャ')
+      setError('Host and SSH private key are required, Nya!')
       return
     }
     setError('')
@@ -47,19 +47,19 @@ export const VpsConnectModal: React.FC<Props> = ({ onConnect }) => {
         {/* ヘッダー */}
         <div className="text-center space-y-1">
           <div className="text-4xl">🐱</div>
-          <h2 className="text-xl font-bold text-white">VPSに接続するニャ</h2>
-          <p className="text-gray-400 text-sm">インシデント対応を始める前に、守るべきVPSを教えてニャ</p>
+          <h2 className="text-xl font-bold text-white">Connect Your VPS, Nya!</h2>
+          <p className="text-gray-400 text-sm">Tell me which VPS to protect before we start incident response</p>
         </div>
 
         {/* フォーム */}
         <div className="space-y-4">
           {/* ホスト */}
           <div className="space-y-1">
-            <label className="text-xs text-gray-400 font-medium uppercase tracking-wider">ホスト / IP</label>
+            <label className="text-xs text-gray-400 font-medium uppercase tracking-wider">Host / IP</label>
             <input
               type="text"
               className="w-full bg-black/30 border border-gray-700 rounded-xl px-4 py-2.5 text-sm font-mono text-gray-200 focus:outline-none focus:border-indigo-500 transition-colors"
-              placeholder="192.168.1.1 または example.com"
+              placeholder="192.168.1.1 or example.com"
               value={host}
               onChange={e => setHost(e.target.value)}
               disabled={status !== 'idle'}
@@ -69,7 +69,7 @@ export const VpsConnectModal: React.FC<Props> = ({ onConnect }) => {
           {/* ユーザー名 & ポート */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-xs text-gray-400 font-medium uppercase tracking-wider">ユーザー名</label>
+              <label className="text-xs text-gray-400 font-medium uppercase tracking-wider">Username</label>
               <input
                 type="text"
                 className="w-full bg-black/30 border border-gray-700 rounded-xl px-4 py-2.5 text-sm font-mono text-gray-200 focus:outline-none focus:border-indigo-500 transition-colors"
@@ -80,7 +80,7 @@ export const VpsConnectModal: React.FC<Props> = ({ onConnect }) => {
               />
             </div>
             <div className="space-y-1">
-              <label className="text-xs text-gray-400 font-medium uppercase tracking-wider">ポート</label>
+              <label className="text-xs text-gray-400 font-medium uppercase tracking-wider">Port</label>
               <input
                 type="number"
                 className="w-full bg-black/30 border border-gray-700 rounded-xl px-4 py-2.5 text-sm font-mono text-gray-200 focus:outline-none focus:border-indigo-500 transition-colors"
@@ -95,13 +95,13 @@ export const VpsConnectModal: React.FC<Props> = ({ onConnect }) => {
           {/* SSH秘密鍵 */}
           <div className="space-y-1">
             <div className="flex items-center justify-between">
-              <label className="text-xs text-gray-400 font-medium uppercase tracking-wider">SSH 秘密鍵 <span className="text-gray-600 normal-case tracking-normal">（限定権限ユーザー推奨: nekoguard）</span></label>
+              <label className="text-xs text-gray-400 font-medium uppercase tracking-wider">SSH Private Key <span className="text-gray-600 normal-case tracking-normal">(limited user recommended: nekoguard)</span></label>
               <button
                 className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
                 onClick={() => fileRef.current?.click()}
                 disabled={status !== 'idle'}
               >
-                ファイルから読み込む
+                Load from file
               </button>
               <input ref={fileRef} type="file" className="hidden" accept=".pem,.key,.txt,*" onChange={handleKeyFile} />
             </div>
@@ -125,19 +125,28 @@ export const VpsConnectModal: React.FC<Props> = ({ onConnect }) => {
           onClick={handleConnect}
           disabled={status !== 'idle'}
         >
-          {status === 'idle' && <><span>🔐</span> VPSに接続してNekoGuardを起動するニャ</>}
+          {status === 'idle' && <><span>🔐</span> Connect VPS &amp; Launch NekoGuard, Nya!</>}
           {status === 'connecting' && (
             <>
               <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              接続中...
+              Connecting...
             </>
           )}
-          {status === 'done' && <><span>✅</span> 接続確立！NekoGuard起動中...</>}
+          {status === 'done' && <><span>✅</span> Connected! Launching NekoGuard...</>}
+        </button>
+
+        {/* デモ用スキップ */}
+        <button
+          className="w-full py-2 rounded-xl text-sm text-gray-400 hover:text-gray-200 transition-colors"
+          onClick={() => onConnect({ host: '', username: 'root', port: 22, sshKey: '' })}
+          disabled={status !== 'idle'}
+        >
+          🐾 Try Demo without VPS (log input mode)
         </button>
 
         <p className="text-center text-xs text-gray-600">
-          秘密鍵はセッション中のみメモリに保持されます。ディスクには保存されません。<br />
-          本番運用では限定権限の <code className="text-gray-500">nekoguard</code> ユーザーを推奨します。
+          Private key is held in memory only during this session. Never saved to disk.<br />
+          For production, we recommend a limited-privilege <code className="text-gray-500">nekoguard</code> user.
         </p>
       </div>
     </div>

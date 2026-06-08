@@ -116,7 +116,7 @@ NekoGuard is deployed on **Google Cloud Run** with Gemini via Vertex AI, structu
 **Stack:**
 - **Frontend**: React + TypeScript + Vite + Tailwind CSS
 - **Backend**: FastAPI + Python 3.11 (Server-Sent Events)
-- **LLM**: Gemini 2.5 Flash via Vertex AI / Gemini API
+- **LLM**: Gemini 3.5 Flash via Vertex AI / Gemini API
 - **Observability**: Dynatrace MCP (Partner track)
 - **NeuroState**: [neurostate-engine](https://github.com/kagioneko/neurostate-engine) (MIT)
 - **Deployment**: Google Cloud Run
@@ -276,7 +276,7 @@ nekoguard-agent/
 - [x] reason / plan / take action visible in UI
 - [x] Human-in-the-loop — no autonomous destructive actions
 - [x] Public repository + MIT License
-- [ ] Demo video (recorded after Dynatrace trial connection)
+- [x] Demo video
 
 ---
 
